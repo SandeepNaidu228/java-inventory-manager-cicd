@@ -124,4 +124,11 @@ class InventoryServiceTest {
 
         assertEquals(1, results.size());
     }
+
+    @Test
+    void shouldReturnEmptyListWhenProductDoesNotExist() {
+        List<Product> results = service.searchByName("Phone");
+
+        assertTrue(results.isEmpty());
+    }
 }
