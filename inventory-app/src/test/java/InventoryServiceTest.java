@@ -1,3 +1,4 @@
+
 import model.Product;
 import service.InventoryService;
 
@@ -61,11 +62,7 @@ class InventoryServiceTest {
         service.addProduct("Laptop", "Electronics", 50000, 2);
         service.addProduct("Mouse", "Electronics", 500, 4);
 
-        assertEquals(
-            102000.0,
-            service.getTotalInventoryValue(),
-            0.01
-        );
+        assertEquals(102000.0, service.getTotalInventoryValue(), 0.01);
     }
 
     @Test
@@ -83,10 +80,8 @@ class InventoryServiceTest {
         );
 
         assertTrue(service.findById(product.getId()).isPresent());
-        assertEquals(
-            "Keyboard",
-            service.findById(product.getId()).get().getName()
-        );
+        assertEquals("Keyboard",
+            service.findById(product.getId()).get().getName());
     }
 
     @Test
@@ -94,8 +89,7 @@ class InventoryServiceTest {
         service.addProduct("Laptop", "Electronics", 50000, 5);
         service.addProduct("Chair", "Furniture", 3000, 10);
 
-        List<Product> results =
-            service.filterByCategory("Electronics");
+        List<Product> results = service.filterByCategory("Electronics");
 
         assertEquals(1, results.size());
         assertEquals("Laptop", results.get(0).getName());
@@ -128,6 +122,32 @@ class InventoryServiceTest {
     @Test
     void shouldReturnEmptyListWhenProductDoesNotExist() {
         List<Product> results = service.searchByName("Phone");
+
+        assertTrue(results.isEmpty());
+    }
+
+    // Test 12
+    @Test
+    void shouldAddMultipleProducts() {
+        service.addProduct("Laptop", "Electronics", 50000, 5);
+        service.addProduct("Mouse", "Electronics", 500, 10);
+        service.addProduct("Chair", "Furniture", 3000, 2);
+
+        assertEquals(3, service.getAllProducts().size());
+    }
+
+    // Test 13
+    @Test
+    void shouldReturnEmptyWhenFindingNonexistentProductById() {
+        assertTrue(service.findById("P999").isEmpty());
+    }
+
+    // Test 14
+    @Test
+    void shouldReturnEmptyListForUnknownCategory() {
+        service.addProduct("Laptop", "Electronics", 50000, 5);
+
+        List<Product> results = service.filterByCategory("Stationery");
 
         assertTrue(results.isEmpty());
     }
