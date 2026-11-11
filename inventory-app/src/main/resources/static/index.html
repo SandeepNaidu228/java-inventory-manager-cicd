@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f5f9;
+            color: #172033;
+        }
+        header {
+            background: #172554;
+            color: white;
+            padding: 24px 6%;
+        }
+        header h1 { margin: 0; font-size: 26px; }
+        header p { margin: 7px 0 0; color: #cbd5e1; }
+        main { max-width: 1150px; margin: 30px auto; padding: 0 20px; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+        .card, .panel {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px #0000000a;
+        }
+        .card span { color: #64748b; font-size: 14px; }
+        .card h2 { margin: 12px 0 0; font-size: 27px; }
+        .panel { margin-bottom: 22px; }
+        .panel h2 { margin-top: 0; font-size: 19px; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr) auto;
+            gap: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+        }
+        button {
+            border: 0;
+            border-radius: 7px;
+            padding: 11px 17px;
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+        }
+        button:hover { background: #1d4ed8; }
+        .delete { background: #dc2626; padding: 7px 11px; }
+        .delete:hover { background: #b91c1c; }
+        .toolbar { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 16px; }
+        .toolbar input { max-width: 300px; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 13px 10px; border-bottom: 1px solid #e2e8f0; }
+        th { color: #64748b; font-size: 13px; }
+        .low { color: #dc2626; font-weight: bold; }
+        #message { margin-top: 12px; color: #2563eb; }
+        @media(max-width: 750px) {
+            .stats { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr 1fr; }
+            .toolbar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Inventory Management System</h1>
+    <p>Manage products, stock levels and inventory value</p>
+</header>
+
+<main>
+    <section class="stats">
+        <div class="card">
+            <span>Total Products</span>
+            <h2 id="productCount">0</h2>
+        </div>
+        <div class="card">
+            <span>Inventory Value</span>
+            <h2 id="inventoryValue">$0.00</h2>
+        </div>
+        <div class="card">
+            <span>Low Stock Items</span>
+            <h2 id="lowStockCount">0</h2>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Add New Product</h2>
+        <form id="productForm" class="form-grid">
+            <input id="name" placeholder="Product name" required>
+            <input id="category" placeholder="Category" required>
+            <input id="price" type="number" step="0.01" min="0.01" placeholder="Price" required>
+            <input id="quantity" type="number" min="0" placeholder="Quantity" required>
+            <button type="submit">Add Product</button>
+        </form>
+        <p id="message"></p>
+    </section>
+
+    <section class="panel">
+        <div class="toolbar">
+            <h2>Product Inventory</h2>
+            <input id="search" placeholder="Search products..." oninput="renderProducts()">
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="productTable"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+    let products = [];
+
+    async function loadProducts() {
+        try {
+            const response = await fetch('/api/products');
+            if (!response.ok) throw new Error('Could not load products');
+            products = await response.json();
+            renderProducts();
+            updateStats();
+        } catch (error) {
+            document.getElementById('message').textContent = error.message;
+        }
+    }
+
+    function renderProducts() {
+        const keyword = document.getElementById('search').value.toLowerCase();
+        const filtered = products.filter(p =>
+            p.name.toLowerCase().includes(keyword) ||
+            p.category.toLowerCase().includes(keyword)
+        );
+
+        document.getElementById('productTable').innerHTML = filtered.map(p => `
+            <tr>
+                <td>${escapeHtml(p.id)}</td>
+                <td>${escapeHtml(p.name)}</td>
+                <td>${escapeHtml(p.category)}</td>
+                <td>$${Number(p.price).toFixed(2)}</td>
+                <td class="${p.quantity <= 5 ? 'low' : ''}">${p.quantity}</td>
+                <td><button class="delete" onclick="deleteProduct('${encodeURIComponent(p.id)}')">Delete</button></td>
+            </tr>
+        `).join('') || '<tr><td colspan="6">No products found</td></tr>';
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, c => ({
+            '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+        })[c]);
+    }
+
+    async function updateStats() {
+        document.getElementById('productCount').textContent = products.length;
+
+        const response = await fetch('/api/inventory/value');
+        const data = await response.json();
+        document.getElementById('inventoryValue').textContent =
+            '$' + Number(data.totalValue).toFixed(2);
+
+        const low = products.filter(p => p.quantity <= 5).length;
+        document.getElementById('lowStockCount').textContent = low;
+    }
+
+    document.getElementById('productForm').addEventListener('submit', async event => {
+        event.preventDefault();
+
+        const product = {
+            name: document.getElementById('name').value,
+            category: document.getElementById('category').value,
+            price: Number(document.getElementById('price').value),
+            quantity: Number(document.getElementById('quantity').value)
+        };
+
+        const response = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+        });
+
+        if (response.ok) {
+            document.getElementById('productForm').reset();
+            document.getElementById('message').textContent = 'Product added successfully!';
+            await loadProducts();
+        } else {
+            document.getElementById('message').textContent = 'Could not add product. Check the details.';
+        }
+    });
+
+    async function deleteProduct(id) {
+        if (!confirm('Are you sure you want to delete this product?')) return;
+
+        const response = await fetch('/api/products/' + id, { method: 'DELETE' });
+        if (response.ok) {
+            await loadProducts();
+        } else {
+            alert('Could not delete product.');
+        }
+    }
+
+    loadProducts();
+</script>
+</body>
+</html>

@@ -1,6 +1,9 @@
+
 target/
 **/target/
-*.class
 .idea/
 .vscode/
-META-INF/
+*.iml
+*.log
+pom.xml.backup
+.env

@@ -1,0 +1,5 @@
+Set-Content .dockerignore ".git
+.idea
+.vscode
+**/src/
+*.iml"
