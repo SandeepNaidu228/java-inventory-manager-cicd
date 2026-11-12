@@ -108,12 +108,4 @@ ID  | Name          | Category    | Stock | Price
 - [ ] Export reports to PDF with Apache PDFBox
 - [ ] Implement import from external supplier catalogs
 
-## Author
 
-**Nicolas Isaza Sierra** — [GitHub @NikoAndes](https://github.com/NikoAndes)
-
-Mechatronics engineering student | Java developer | UMNG, Colombia
-
-## License
-
-MIT License — see [LICENSE](LICENSE) for details.
